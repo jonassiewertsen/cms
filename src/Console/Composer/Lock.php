@@ -109,6 +109,34 @@ class Lock
     }
 
     /**
+     * Override package version.
+     *
+     * @param string $package
+     * @param string $version
+     * @return $this
+     */
+    public function overridePackageVersion($package, $version)
+    {
+        $content = json_decode($this->files->get($this->path), true);
+
+        $packages = collect($content['packages'])
+            ->map(function ($packageDetails) use ($package, $version) {
+                if ($packageDetails['name'] === $package) {
+                    $packageDetails['version'] = $version;
+                }
+
+                return $packageDetails;
+            })
+            ->all();
+
+        $content['packages'] = $packages;
+
+        $this->files->put($this->path, json_encode($content, JSON_UNESCAPED_SLASHES));
+
+        return $this;
+    }
+
+    /**
      * Sometimes composer returns versions with a 'v', sometimes it doesn't.
      *
      * @param string $version
