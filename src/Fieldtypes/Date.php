@@ -111,7 +111,7 @@ class Date extends Fieldtype
             $data = array_get($data, 'start', null);
         }
 
-        return Carbon::createFromFormat($this->dateFormat($data), $data)->format('Y-m-d H:i');
+        return Carbon::createFromFormat($this->dateFormat($data), $data)->format($this->config('time_enabled') ? 'Y-m-d H:i' : 'Y-m-d');
     }
 
     public function process($data)
@@ -121,15 +121,28 @@ class Date extends Fieldtype
         }
 
         if ($this->config('mode') === 'range') {
-            return [
-                'start' => Carbon::parse($data['start'])->format('Y-m-d'),
-                'end' => Carbon::parse($data['end'])->format('Y-m-d'),
-            ];
+            return $data;
         }
 
         $date = Carbon::parse($data);
 
         return $date->format($this->dateFormat($data));
+    }
+
+    public function preProcessIndex($data)
+    {
+        if (! $data) {
+            return;
+        }
+
+        if ($this->config('mode') === 'range') {
+            $start = Carbon::parse($data['start'])->format(config('statamic.cp.date_format'));
+            $end = Carbon::parse($data['end'])->format(config('statamic.cp.date_format'));
+
+            return $start.' - '.$end;
+        }
+
+        return Carbon::parse($data)->format(config('statamic.cp.date_format'));
     }
 
     private function dateFormat($date)
